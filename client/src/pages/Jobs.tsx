@@ -213,7 +213,7 @@ export default function Jobs() {
   };
 
   return (
-    <div className="min-h-screen pt-16">
+    <div className="min-h-screen pt-16 bg-white">
       <div className="container py-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

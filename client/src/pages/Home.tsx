@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, BrainCircuit, ScanSearch, Rocket } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 import { useEffect, useRef } from 'react';
@@ -114,9 +113,7 @@ export default function Home() {
     navigate('/onboarding');
   };
 
-  const handleEmployer = () => {
-    navigate('/auth?role=employer');
-  };
+
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#dfe4ec]">
@@ -127,63 +124,30 @@ export default function Home() {
 
       <div className="container relative z-10 pt-20">
         <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center pb-12 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45 }}
-            className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/70 px-4 py-1.5"
-          >
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/70 px-4 py-1.5">
             <Sparkles className="h-4 w-4 text-primary" />
             <span className="text-xs font-semibold text-primary">{t('home.badge')}</span>
-          </motion.div>
+          </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.05 }}
-            className="font-display text-6xl font-extrabold tracking-tight text-[#3f4a5c] sm:text-7xl lg:text-8xl"
-          >
+          <h1 className="font-display text-6xl font-extrabold tracking-tight text-[#3f4a5c] sm:text-7xl lg:text-8xl">
             <span>Prof</span>
             <span className="bg-gradient-to-r from-[#26d48e] to-[#37aaf4] bg-clip-text text-transparent">.ai</span>
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.12 }}
-            className="mt-4 max-w-2xl text-lg text-[#556173]"
-          >
-              {t('home.subtitle')}
-          </motion.p>
+          <p className="mt-4 max-w-2xl text-lg text-[#556173]">
+            {t('home.subtitle')}
+          </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.18 }}
-            className="mt-10 flex flex-col items-center gap-3 sm:flex-row"
-          >
+          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
             <Button size="lg" className="h-14 min-w-[220px] rounded-xl text-base font-semibold" onClick={handleSeeker}>
               {t('home.start')}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="h-14 min-w-[220px] rounded-xl border-white/70 bg-white/70 text-[#3f4a5c]"
-              onClick={handleEmployer}
-            >
-              {t('home.employer')}
-            </Button>
-          </motion.div>
+
+          </div>
         </div>
 
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="pb-14"
-        >
+        <section className="pb-14">
           <h2 className="text-center font-display text-3xl font-bold text-[#3f4a5c]">{t('home.featuresTitle')}</h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-[#617086]">
             {t('home.featuresSubtitle')}
@@ -194,12 +158,8 @@ export default function Home() {
               const titleKey = (`home.feature${index + 1}Title`) as const;
               const textKey = (`home.feature${index + 1}Text`) as const;
               return (
-                <motion.div
+                <div
                   key={titleKey}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{ duration: 0.38, delay: index * 0.06, ease: 'easeOut' }}
                   className="rounded-2xl border border-white/60 bg-white/72 p-6 shadow-sm backdrop-blur-sm"
                 >
                   <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
@@ -207,19 +167,13 @@ export default function Home() {
                   </div>
                   <h3 className="font-display text-xl font-semibold text-[#3f4a5c]">{t(titleKey)}</h3>
                   <p className="mt-2 text-sm text-[#617086]">{t(textKey)}</p>
-                </motion.div>
+                </div>
               );
             })}
           </div>
-        </motion.section>
+        </section>
 
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.45, ease: 'easeOut' }}
-          className="pb-16"
-        >
+        <section className="pb-16">
           <div className="rounded-3xl border border-white/65 bg-white/70 p-8 backdrop-blur-sm">
             <h2 className="font-display text-3xl font-bold text-[#3f4a5c]">{t('home.howTitle')}</h2>
             <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -237,7 +191,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </motion.section>
+        </section>
       </div>
     </div>
   );

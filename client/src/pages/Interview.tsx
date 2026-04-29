@@ -56,8 +56,8 @@ export default function Interview() {
     threats: ['Слишком общие формулировки без примеров', 'Потеря структуры ответа при сложных вопросах'],
     overallFeedback: 'Хорошее собеседование! Рекомендуем подготовить больше конкретных примеров из опыта.',
     detailedAnalysis: lang === 'kk'
-      ? 'Толық AI-талдау үшін GitHub Models токенін қосыңыз (VITE_AI_API_KEY).'
-      : 'Для полного AI-анализа добавьте токен GitHub Models (VITE_AI_API_KEY).',
+      ? 'Толық AI-талдау үшін Gemini токенін қосыңыз (VITE_AI_API_KEY).'
+      : 'Для полного AI-анализа добавьте токен Gemini (VITE_AI_API_KEY).',
   });
 
   const normalizeAnalytics = (raw: unknown) => {
@@ -275,7 +275,7 @@ export default function Interview() {
   };
   if (analyzing && !showAnalytics) {
     return (
-      <div className="min-h-screen pt-16">
+      <div className="min-h-screen pt-16 bg-white">
         <div className="container py-10 max-w-3xl">
           <div className="rounded-2xl border border-border bg-white p-6">
             <AIThinking text={t('interview.analyzingInterview')} />
@@ -287,7 +287,7 @@ export default function Interview() {
 
   if (!interviewActive && !showAnalytics) {
     return (
-      <div className="min-h-screen pt-16">
+      <div className="min-h-screen pt-16 bg-background">
         <div className="container py-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -362,7 +362,7 @@ export default function Interview() {
   }
   if (showAnalytics && interviewAnalytics) {
     return (
-      <div className="min-h-screen pt-16">
+      <div className="min-h-screen pt-16 bg-white">
         <div className="container py-10 max-w-3xl">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 mb-6">
@@ -496,7 +496,7 @@ export default function Interview() {
   }
 
   return (
-    <div className="min-h-screen pt-16 flex flex-col">
+    <div className="min-h-screen pt-16 flex flex-col bg-white">
       <div className="border-b border-border bg-white/80 backdrop-blur-md sticky top-16 z-30">
         <div className="container flex items-center justify-between h-14">
           <div className="flex items-center gap-3">

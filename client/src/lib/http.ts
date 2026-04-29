@@ -1,14 +1,21 @@
-import { useStore } from '@/store/useStore';
+function getStoredToken(): string | null {
+  try {
+    const raw = localStorage.getItem('prof-ai-storage');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { state?: { authToken?: string } };
+    return parsed.state?.authToken ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = useStore.getState().authToken;
-
   const headers = new Headers(init.headers ?? {});
   if (!headers.has('Content-Type') && init.body) {
     headers.set('Content-Type', 'application/json');
   }
-
-  if (token) {
+  const token = getStoredToken();
+  if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`);
   }
 

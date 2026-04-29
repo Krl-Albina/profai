@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import type { ReactNode } from "react";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -11,56 +12,47 @@ import Dashboard from "./pages/Dashboard";
 import Jobs from "./pages/Jobs";
 import Interview from "./pages/Interview";
 import Resume from "./pages/Resume";
-import EmployerCreateJob from "./pages/EmployerCreateJob";
-import EmployerCandidates from "./pages/EmployerCandidates";
 import RoleGuard from "./components/routing/RoleGuard";
-import Admin from "./pages/Admin";
-import Auth from "./pages/Auth";
 import { I18nProvider } from "./contexts/I18nContext";
+import { useStore } from "./store/useStore";
+
+function AppHydrationGate({ children }: { children: ReactNode }) {
+  const hasHydrated = useStore((state) => state.hasHydrated);
+
+  if (!hasHydrated) {
+    return <div className="min-h-screen bg-background" aria-hidden="true" />;
+  }
+
+  return children;
+}
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/auth" component={Auth} />
       <Route path="/onboarding">
-        <RoleGuard allowedRoles={["seeker"]} requireAuth={false} redirectTo="/">
+        <RoleGuard allowedRoles={["seeker"]} redirectTo="/">
           <Onboarding />
         </RoleGuard>
       </Route>
       <Route path="/dashboard">
-        <RoleGuard allowedRoles={["seeker"]} requireAuth={false} redirectTo="/">
+        <RoleGuard allowedRoles={["seeker"]} redirectTo="/">
           <Dashboard />
         </RoleGuard>
       </Route>
       <Route path="/jobs">
-        <RoleGuard allowedRoles={["seeker"]} requireAuth={false} redirectTo="/">
+        <RoleGuard allowedRoles={["seeker"]} redirectTo="/">
           <Jobs />
         </RoleGuard>
       </Route>
       <Route path="/interview">
-        <RoleGuard allowedRoles={["seeker"]} requireAuth={false} redirectTo="/">
+        <RoleGuard allowedRoles={["seeker"]} redirectTo="/">
           <Interview />
         </RoleGuard>
       </Route>
       <Route path="/resume">
-        <RoleGuard allowedRoles={["seeker"]} redirectTo="/auth?role=seeker&next=/resume">
+        <RoleGuard allowedRoles={["seeker"]} redirectTo="/">
           <Resume />
-        </RoleGuard>
-      </Route>
-      <Route path="/employer/create-job">
-        <RoleGuard allowedRoles={["employer"]}>
-          <EmployerCreateJob />
-        </RoleGuard>
-      </Route>
-      <Route path="/employer/candidates">
-        <RoleGuard allowedRoles={["employer"]}>
-          <EmployerCandidates />
-        </RoleGuard>
-      </Route>
-      <Route path="/admin">
-        <RoleGuard allowedRoles={["super_admin"]}>
-          <Admin />
         </RoleGuard>
       </Route>
       <Route path="/404" component={NotFound} />
@@ -75,9 +67,11 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <I18nProvider>
           <TooltipProvider>
-            <Toaster />
-            <Header />
-            <Router />
+            <AppHydrationGate>
+              <Toaster />
+              <Header />
+              <Router />
+            </AppHydrationGate>
           </TooltipProvider>
         </I18nProvider>
       </ThemeProvider>

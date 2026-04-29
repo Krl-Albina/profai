@@ -1,12 +1,11 @@
 /*
- * AI helpers for guest and authenticated users.
- * Uses OpenAI-compatible HTTP endpoint (e.g., LM Studio) from frontend.
+ * AI helpers — uses Google Gemini REST API (v1beta).
  */
 
-interface ChatCompletionResponse {
-  choices?: Array<{
-    message?: {
-      content?: string;
+interface GeminiResponse {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{ text?: string }>;
     };
   }>;
 }
@@ -40,35 +39,12 @@ export interface TargetJobContext {
 
 type RawAnswer = Record<string, unknown>;
 
-function normalizeBaseUrl(rawBaseUrl: string): string {
-  const trimmed = rawBaseUrl.trim().replace(/\/+$/, '');
-  if (!trimmed) return 'https://models.inference.ai.azure.com';
-
-  const isLocalLike =
-    trimmed.startsWith('http://127.0.0.1') ||
-    trimmed.startsWith('http://localhost') ||
-    trimmed.includes('.ngrok');
-
-  if (isLocalLike && !trimmed.endsWith('/v1')) {
-    return `${trimmed}/v1`;
-  }
-
-  return trimmed;
-}
-
-function getRuntimeConfig() {
+function getGeminiConfig() {
   const env = (import.meta as unknown as { env: Record<string, string | undefined> }).env;
-  const baseUrl = normalizeBaseUrl(env.VITE_AI_BASE_URL || 'https://models.inference.ai.azure.com');
-  const model = (env.VITE_AI_MODEL || 'gpt-4o').trim();
-  const isLocalLike = baseUrl.startsWith('http://127.0.0.1') || baseUrl.startsWith('http://localhost') || baseUrl.includes('.ngrok');
-  const apiUrl = (env.VITE_AI_API_URL || '').trim();
-  const endpointUrl = apiUrl
-    ? apiUrl
-    : baseUrl.endsWith('/chat/completions')
-      ? baseUrl
-      : `${baseUrl}/chat/completions`;
-  const apiKey = (env.VITE_AI_API_KEY || env.VITE_GITHUB_TOKEN || '').trim() || (isLocalLike ? 'lm-studio' : '');
-  return { endpointUrl, model, apiKey };
+  const apiKey = (env.VITE_GEMINI_API_KEY || '').trim();
+  const model = (env.VITE_GEMINI_MODEL || 'gemini-1.5-flash').trim();
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  return { apiKey, model, endpoint };
 }
 
 function sanitizeInterviewText(raw: string): string {
@@ -83,43 +59,49 @@ function sanitizeInterviewText(raw: string): string {
     .trim();
 }
 
-export async function callGemini(prompt: string, systemPrompt?: string): Promise<string> {
+export async function callGemini(prompt: string, systemPrompt?: string, maxOutputTokens = 2048): Promise<string> {
   try {
-    const { endpointUrl, model, apiKey } = getRuntimeConfig();
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    const { apiKey, endpoint } = getGeminiConfig();
 
-    const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
-    if (systemPrompt) {
-      messages.push({ role: 'system', content: systemPrompt });
+    if (!apiKey) {
+      console.warn('VITE_GEMINI_API_KEY not set, using fallback');
+      return getFallbackResponse(prompt);
     }
-    messages.push({ role: 'user', content: prompt });
 
-    const response = await fetch(endpointUrl, {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    const requestBody: {
+      contents: Array<{ role: string; parts: Array<{ text: string }> }>;
+      systemInstruction?: { parts: Array<{ text: string }> };
+      generationConfig: { temperature: number; maxOutputTokens: number };
+    } = {
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { temperature: 0.7, maxOutputTokens },
+    };
+
+    if (systemPrompt) {
+      requestBody.systemInstruction = { parts: [{ text: systemPrompt }] };
+    }
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature: 0.7,
-        max_tokens: 1024,
-      }),
-    }).finally(() => {
-      clearTimeout(timeoutId);
-    });
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    }).finally(() => clearTimeout(timeoutId));
 
     if (!response.ok) {
-      throw new Error(`AI HTTP ${response.status}`);
+      const errorText = await response.text().catch(() => 'no body');
+      console.error('Gemini API Error:', response.status, errorText);
+      throw new Error(`Gemini HTTP ${response.status}: ${errorText}`);
     }
 
-    const data = (await response.json()) as ChatCompletionResponse;
-    const content = data.choices?.[0]?.message?.content?.trim();
+    const data = (await response.json()) as GeminiResponse;
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
     return content || getFallbackResponse(prompt);
-  } catch {
+  } catch (error) {
+    console.error('Gemini call failed:', error instanceof Error ? error.message : 'Unknown error');
     return getFallbackResponse(prompt);
   }
 }

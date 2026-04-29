@@ -14,28 +14,26 @@ interface RoleGuardProps {
 export default function RoleGuard({
   allowedRoles,
   children,
-  redirectTo = '/auth',
-  requireAuth = true,
+  redirectTo = '/',
 }: RoleGuardProps) {
   const [, navigate] = useLocation();
-  const { userRole, isAuthenticated, hasHydrated } = useStore();
+  const { userRole, hasHydrated } = useStore();
 
   if (!hasHydrated) {
     return null;
   }
 
   const hasAllowedRole = !!userRole && allowedRoles.includes(userRole as Role);
-  const isAllowed = hasAllowedRole && (!requireAuth || isAuthenticated);
 
   useEffect(() => {
-    if (!isAllowed) {
+    if (!hasAllowedRole) {
       navigate(redirectTo);
     }
-  }, [isAllowed, navigate, redirectTo]);
+  }, [hasAllowedRole, navigate, redirectTo]);
 
-  if (!isAllowed) {
+  if (!hasAllowedRole) {
     return null;
   }
 
-  return <>{children}</>;
+  return children;
 }

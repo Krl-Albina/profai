@@ -149,7 +149,7 @@ export default function Dashboard() {
   if (!onboardingComplete) return null;
 
   return (
-    <div className="min-h-screen pt-16">
+    <div className="min-h-screen pt-16 bg-white">
       <motion.div
         className="container py-10"
         initial="hidden"

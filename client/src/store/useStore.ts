@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  fullName: string;
+  role: 'seeker' | 'employer' | 'super_admin';
+  onboardingComplete: boolean;
+}
+
 export interface UserProfile {
   name: string;
   email: string;
@@ -41,17 +49,6 @@ export interface InterviewAnalytics {
   detailedAnalysis: string;
 }
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  fullName: string;
-  age: number | null;
-  role: 'seeker' | 'employer' | 'super_admin';
-  onboardingComplete: boolean;
-  profileSnapshot?: Partial<UserProfile> | null;
-  onboardingAnswers?: OnboardingAnswer[] | null;
-}
-
 export interface JobApplication {
   id: string;
   jobId: string;
@@ -68,12 +65,6 @@ export interface JobApplication {
 interface AppState {
   hasHydrated: boolean;
   setHasHydrated: (hydrated: boolean) => void;
-
-  authToken: string | null;
-  authUser: AuthUser | null;
-  isAuthenticated: boolean;
-  setAuthSession: (token: string, user: AuthUser) => void;
-  clearAuthSession: () => void;
 
   userRole: 'seeker' | 'employer' | 'super_admin' | null;
   setUserRole: (role: 'seeker' | 'employer' | 'super_admin' | null) => void;
@@ -116,6 +107,11 @@ interface AppState {
   applications: JobApplication[];
   addApplication: (application: JobApplication) => void;
 
+  authToken: string | null;
+  authUser: AuthUser | null;
+  setAuthSession: (token: string, user: AuthUser) => void;
+  clearAuthSession: () => void;
+
   resetAll: () => void;
 }
 
@@ -140,32 +136,6 @@ export const useStore = create<AppState>()(
     (set) => ({
       hasHydrated: false,
       setHasHydrated: (hydrated) => set({ hasHydrated: hydrated }),
-
-      authToken: null,
-      authUser: null,
-      isAuthenticated: false,
-      setAuthSession: (token, user) =>
-        set((state) => ({
-          authToken: token,
-          authUser: user,
-          isAuthenticated: true,
-          userRole: user.role,
-          onboardingComplete: user.onboardingComplete,
-          onboardingAnswers: user.onboardingAnswers ?? state.onboardingAnswers,
-          userProfile: {
-            ...state.userProfile,
-            ...(user.profileSnapshot ?? {}),
-            name: user.fullName || state.userProfile.name,
-            email: user.email || state.userProfile.email,
-          },
-        })),
-      clearAuthSession: () =>
-        set({
-          authToken: null,
-          authUser: null,
-          isAuthenticated: false,
-          userRole: null,
-        }),
 
       userRole: null,
       setUserRole: (role) => set({ userRole: role }),
@@ -220,13 +190,22 @@ export const useStore = create<AppState>()(
           applications: [application, ...state.applications],
         })),
 
+      authToken: null,
+      authUser: null,
+      setAuthSession: (token, user) =>
+        set({
+          authToken: token,
+          authUser: user,
+          userRole: user.role,
+          onboardingComplete: user.onboardingComplete,
+        }),
+      clearAuthSession: () =>
+        set({ authToken: null, authUser: null }),
+
       resetAll: () =>
         set({
           hasHydrated: true,
           userRole: null,
-          authToken: null,
-          authUser: null,
-          isAuthenticated: false,
           onboardingStep: 0,
           onboardingAnswers: [],
           onboardingComplete: false,
@@ -238,6 +217,8 @@ export const useStore = create<AppState>()(
           employerJobs: [],
           generatedResume: null,
           applications: [],
+          authToken: null,
+          authUser: null,
         }),
     }),
     {

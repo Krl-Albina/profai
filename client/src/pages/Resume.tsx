@@ -275,7 +275,7 @@ export default function Resume() {
 
   if (isEditing && !loading) {
     return (
-      <div className="min-h-screen pt-16">
+      <div className="min-h-screen pt-16 bg-background">
         <div className="container py-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <Button
@@ -391,7 +391,7 @@ export default function Resume() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-16">
+      <div className="min-h-screen pt-16 bg-background">
         <div className="container py-12 max-w-3xl">
           <motion.div
             initial={{ opacity: 0, y: 14 }}
@@ -432,7 +432,7 @@ export default function Resume() {
   }
 
   return (
-    <div className="min-h-screen pt-16">
+    <div className="min-h-screen pt-16 bg-white">
       <div className="container py-10 max-w-4xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center justify-between mb-8">

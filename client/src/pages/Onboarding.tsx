@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { callGemini } from '@/lib/ai';
-import { markOnboardingComplete } from '@/lib/authApi';
+
 import { jobs } from '@/data/jobs';
 import { useStore } from '@/store/useStore';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -62,35 +62,6 @@ const revealItem: any = {
     },
   },
 };
-
-function useTypewriterText(text: string, active: boolean, speed = 24, delay = 0) {
-  const [displayText, setDisplayText] = useState(active ? '' : text);
-
-  useEffect(() => {
-    if (!active) {
-      setDisplayText(text);
-      return;
-    }
-
-    setDisplayText('');
-    let index = 0;
-    const timeoutId = window.setTimeout(() => {
-      const intervalId = window.setInterval(() => {
-        index += 1;
-        setDisplayText(text.slice(0, index));
-        if (index >= text.length) {
-          window.clearInterval(intervalId);
-        }
-      }, speed);
-    }, delay);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [active, delay, speed, text]);
-
-  return displayText;
-}
 
 function layoutByRelevance(index: number, total: number, score: number, maxScore: number, minScore: number) {
   const angle = (Math.PI * 2 * index) / Math.max(total, 1) + ((index % 2 === 0 ? 1 : -1) * Math.PI) / 42;
@@ -187,8 +158,8 @@ export default function Onboarding() {
   }, []);
 
   const quickRoleOptions = useMemo(() => roleCatalog.slice(0, 10).map((item) => item.title), [roleCatalog]);
-  const roleTitleText = useTypewriterText(t('onboarding.titleStart'), stage === 'role', 22, 40);
-  const roleSubtitleText = useTypewriterText(t('onboarding.subtitleStart'), stage === 'role', 10, 320);
+  const roleTitleText = t('onboarding.titleStart');
+  const roleSubtitleText = t('onboarding.subtitleStart');
 
   useEffect(() => {
     return () => {
@@ -398,10 +369,6 @@ export default function Onboarding() {
     addOnboardingAnswer({ question: t('onboarding.careerIdentityQuestion'), answer: identityStatement });
 
     setOnboardingComplete(true);
-    try {
-      await markOnboardingComplete();
-    } catch {
-    }
 
     navigate('/dashboard');
   };
@@ -426,7 +393,6 @@ export default function Onboarding() {
           >
             <motion.h1 variants={revealItem} className="mb-4 min-h-[76px] font-display text-6xl font-semibold text-[#4a5568]">
               {roleTitleText}
-              <span className="typing-caret">|</span>
             </motion.h1>
             <motion.p variants={revealItem} className="mb-8 min-h-[36px] text-[40px] text-lg text-[#5f6d80]">{roleSubtitleText}</motion.p>
 

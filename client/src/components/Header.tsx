@@ -1,5 +1,5 @@
 import { useStore } from '@/store/useStore';
-import { Sparkles, Menu, X, RotateCcw } from 'lucide-react';
+import { Sparkles, Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useI18n } from '@/contexts/I18nContext';
@@ -7,7 +7,7 @@ import { useI18n } from '@/contexts/I18nContext';
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [homeHeaderUnlocked, setHomeHeaderUnlocked] = useState(false);
-  const { userRole, onboardingComplete, isAuthenticated, resetAll } = useStore();
+  const { userRole, onboardingComplete } = useStore();
   const [location] = useLocation();
   const { t, lang, setLang } = useI18n();
 
@@ -93,19 +93,6 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
-          {!isAuthenticated ? (
-            <Link href="/auth" className="text-sm font-medium text-primary no-underline">
-              {t('header.login')}
-            </Link>
-          ) : (
-            <button
-              onClick={() => { resetAll(); window.location.href = '/'; }}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive transition-colors"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              {t('common.logout')}
-            </button>
-          )}
         </nav>
 
         <button
@@ -144,22 +131,6 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
-            {isAuthenticated ? (
-              <button
-                onClick={() => { resetAll(); window.location.href = '/'; setMenuOpen(false); }}
-                className="text-sm text-destructive text-left py-2"
-              >
-                {t('common.logout')}
-              </button>
-            ) : (
-              <Link
-                href="/auth"
-                className="text-sm font-medium text-primary no-underline py-2"
-                onClick={() => setMenuOpen(false)}
-              >
-                {t('header.login')}
-              </Link>
-            )}
           </nav>
         </div>
       )}
