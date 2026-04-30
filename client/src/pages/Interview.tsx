@@ -147,6 +147,10 @@ export default function Interview() {
     if (!baseServerUrl.startsWith('ws://') && !baseServerUrl.startsWith('wss://')) {
       baseServerUrl = 'wss://' + baseServerUrl;
     }
+    // Add /ws path if missing
+    if (!baseServerUrl.includes('/ws')) {
+      baseServerUrl = baseServerUrl.replace(/\/?$/, '/ws');
+    }
     const origin = window.location.origin;
 
     // Pass job context to server via query params
