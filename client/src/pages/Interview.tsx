@@ -432,7 +432,7 @@ export default function Interview() {
                 <div className="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors">
                   <Bot className="w-6 h-6 text-primary" />
                 </div>
-                <h2 className="font-display font-bold text-lg mb-2">3D Аватар</h2>
+                <h2 className="font-display font-bold text-lg mb-2">Диана — AI Интервьюер</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-4">
                   Реалистичное интервью с 3D-аватаром: мимика, lip-sync и голос в реальном времени.
                 </p>
@@ -474,7 +474,7 @@ export default function Interview() {
                   <MessageSquare className="w-3.5 h-3.5 text-primary" />
                 )}
                 <span className="text-xs font-medium text-primary">
-                  {interviewMode === 'avatar' ? '3D Аватар' : 'Текстовый чат'}
+                  {interviewMode === 'avatar' ? 'Диана — AI Интервьюер' : 'Текстовый чат'}
                 </span>
               </div>
             </div>
