@@ -195,6 +195,17 @@ function cleanJsonResponse(raw: string): string {
   return raw.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
 }
 
+function stripMd(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/^#+\s*/gm, '')
+    .replace(/^[-*•]\s+/gm, '')
+    .replace(/^\d+[.)]\s+/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function normalizeText(value: unknown): string {
   return String(value ?? '').trim();
 }
@@ -573,15 +584,15 @@ ${targetJob ? `Целевая вакансия: ${targetJob.title} (${targetJob.
       city: parsed.city?.trim() || fallback.city,
       email: parsed.email?.trim() || fallback.email,
       phone: parsed.phone?.trim() || fallback.phone,
-      summary: parsed.summary?.trim() && parsed.summary.trim().length >= 140 ? parsed.summary.trim() : fallback.summary,
-      skills: Array.isArray(parsed.skills) && parsed.skills.length > 0 ? parsed.skills.map((s) => String(s).trim()).filter(Boolean) : fallback.skills,
-      strengths: Array.isArray(parsed.strengths) && parsed.strengths.length > 0 ? parsed.strengths.map((s) => String(s).trim()).filter(Boolean) : fallback.strengths,
-      achievements: Array.isArray(parsed.achievements) && parsed.achievements.length > 0 ? parsed.achievements.map((s) => String(s).trim()).filter(Boolean) : fallback.achievements,
-      tools: Array.isArray(parsed.tools) && parsed.tools.length > 0 ? parsed.tools.map((s) => String(s).trim()).filter(Boolean) : fallback.tools,
-      experience: parsed.experience?.trim() || fallback.experience,
-      education: parsed.education?.trim() || fallback.education,
-      languages: Array.isArray(parsed.languages) ? parsed.languages.map((s) => String(s).trim()).filter(Boolean) : fallback.languages,
-      projects: Array.isArray(parsed.projects) ? parsed.projects.map((s) => String(s).trim()).filter(Boolean) : fallback.projects,
+      summary: parsed.summary?.trim() && parsed.summary.trim().length >= 140 ? stripMd(parsed.summary.trim()) : fallback.summary,
+      skills: Array.isArray(parsed.skills) && parsed.skills.length > 0 ? parsed.skills.map((s) => stripMd(String(s).trim())).filter(Boolean) : fallback.skills,
+      strengths: Array.isArray(parsed.strengths) && parsed.strengths.length > 0 ? parsed.strengths.map((s) => stripMd(String(s).trim())).filter(Boolean) : fallback.strengths,
+      achievements: Array.isArray(parsed.achievements) && parsed.achievements.length > 0 ? parsed.achievements.map((s) => stripMd(String(s).trim())).filter(Boolean) : fallback.achievements,
+      tools: Array.isArray(parsed.tools) && parsed.tools.length > 0 ? parsed.tools.map((s) => stripMd(String(s).trim())).filter(Boolean) : fallback.tools,
+      experience: parsed.experience?.trim() ? stripMd(parsed.experience.trim()) : fallback.experience,
+      education: parsed.education?.trim() ? stripMd(parsed.education.trim()) : fallback.education,
+      languages: Array.isArray(parsed.languages) ? parsed.languages.map((s) => stripMd(String(s).trim())).filter(Boolean) : fallback.languages,
+      projects: Array.isArray(parsed.projects) ? parsed.projects.map((s) => stripMd(String(s).trim())).filter(Boolean) : fallback.projects,
     };
   } catch {
     return buildResumeFallback(profile, answers, tone, lang, targetJob);
