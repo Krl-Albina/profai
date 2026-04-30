@@ -277,14 +277,25 @@ export default function Onboarding() {
   const generateIdentity = async () => {
     setLoadingIdentity(true);
     try {
-      const prompt = `${lang === 'kk' ? 'Қазақ тілінде қысқа мансаптық identity statement жаса (2-3 сөйлем).' : 'Сформируй короткий карьерный identity statement на русском языке (2-3 предложения).'}
+      const prompt = `${lang === 'kk'
+        ? 'Қазақ тілінде мансаптық identity statement жаз. Тек 2-3 сөйлем, бір нұсқа ғана. Нөмірлеме, тізбелеме, markdown болмасын. Тек мәтін.'
+        : 'Напиши карьерный identity statement на русском языке. Ровно 2-3 предложения, один вариант. Без нумерации, без списков, без markdown-разметки (без **, *, #). Только чистый текст.'}
     ${t('onboarding.roleExp')}: ${experiences.join(', ') || roleInput}
     ${t('dashboard.education')}: ${education.join(', ') || t('onboarding.noData')}
     ${t('onboarding.skills')}: ${skills.join(', ') || t('onboarding.notSpecifiedPlural')}
     ${t('onboarding.interests')}: ${interests.join(', ') || t('onboarding.notSpecifiedPlural')}
     ${lang === 'kk' ? 'Стиль: сенімді, нақты, кәсіби.' : 'Тон: уверенный, конкретный, профессиональный.'}`;
 
-      const text = await callGemini(prompt);
+      const raw = await callGemini(prompt);
+      // Strip any markdown formatting Gemini might still add
+      const text = raw
+        .replace(/\*\*(.*?)\*\*/g, '$1')
+        .replace(/\*(.*?)\*/g, '$1')
+        .replace(/^#+\s*/gm, '')
+        .replace(/^[-*•]\s+/gm, '')
+        .replace(/^\d+[.)]\s+/gm, '')
+        .replace(/\n{2,}/g, '\n')
+        .trim();
       setIdentityStatement(text);
     } catch {
       setIdentityStatement(lang === 'kk'
