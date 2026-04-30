@@ -141,7 +141,9 @@ export default function Interview() {
     if (!interviewActive || interviewMode !== 'avatar') return;
     if (!avatarContainerRef.current) return;
 
-    const baseServerUrl = (import.meta as unknown as { env: Record<string, string | undefined> }).env.VITE_AVATAR_SERVER_URL || 'ws://localhost:8765/ws';
+    let baseServerUrl = (import.meta as unknown as { env: Record<string, string | undefined> }).env.VITE_AVATAR_SERVER_URL || 'ws://localhost:8765/ws';
+    // Auto-convert http(s):// → ws(s):// in case env var was set incorrectly
+    baseServerUrl = baseServerUrl.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://');
     const origin = window.location.origin;
 
     // Pass job context to server via query params
