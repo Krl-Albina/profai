@@ -5,13 +5,14 @@ import { jobs } from '@/data/jobs';
 import { conductInterview, analyzeInterview } from '../lib/ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MessageSquare, Send, BarChart3, ArrowLeft, Sparkles,
-  TrendingUp, AlertTriangle, CheckCircle, XCircle, RefreshCw, Mic, MicOff, Volume2, VolumeX
+  MessageSquare, Send, BarChart3, BarChart2, ArrowLeft, Sparkles,
+  TrendingUp, AlertTriangle, CheckCircle, XCircle, RefreshCw, Mic, MicOff, Volume2, VolumeX, Bot, Wifi, WifiOff
 } from 'lucide-react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useSearch } from 'wouter';
 import { useI18n } from '@/contexts/I18nContext';
 import { useSpeechRecognition, useSpeechSynthesis } from '@/hooks/useSpeech';
+import { AvatarChat } from '@myned-ai/avatar-chat-widget';
 
 const INTERVIEW_IMG = 'https://private-us-east-1.manuscdn.com/sessionFile/jEzBJwYrZx1oONmR73Dibg/sandbox/w9MJXfqlFpTQrySgI2073N-img-3_1772022775000_na1fn_aW50ZXJ2aWV3LWlsbHVzdHJhdGlvbg.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvakV6Qkp3WXJaeDFvT05tUjczRGliZy9zYW5kYm94L3c5TUpYZnFsRnBUUXJ5U2dJMjA3M04taW1nLTNfMTc3MjAyMjc3NTAwMF9uYTFmbl9hVzUwWlhKMmFXVjNMV2xzYkhWemRISmhkR2x2YmcucG5nP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMTkyMCxoXzE5MjAvZm9ybWF0LHdlYnAvcXVhbGl0eSxxXzgwIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=gcTbxLHRtPJji4QQqdmUKhHjPc4jzBYEfz2mmSg77VoazxFIUbyOExBQ9BR9~zVwVBb8wApmDzCs87pVOG-3tFpS3vxLw1PdxXjRRcqAtsCYRk7FVXRPjaw5KFJLApexX-Q~ztC241HHi6rS87Ah8FzTgiR-sD-PKI2xGBLDIWG5On1kLOFl5npLRmkRiv0wQYrSQBTq24G5sJJ9Ur3ncoIcKcL-tM9LuDaCnCC-kDZlZyBca~aWeQLB-O~orboMdigrGC83VI-WWVNwpP6dLvqKAMibWZ-VeIummub4t5XsrknVd84R7g-ceMzGbFy8~TRzuEmpwRH6c2Tirs~dog__';
 
@@ -32,7 +33,10 @@ export default function Interview() {
   const [analyzing, setAnalyzing] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState(jobIdParam || interviewJobId || '');
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [interviewMode, setInterviewMode] = useState<'text' | 'avatar' | null>(null);
+  const [avatarConnected, setAvatarConnected] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const avatarContainerRef = useRef<HTMLDivElement>(null);
 
   const selectedJob = jobs.find((j) => j.id === selectedJobId);
 
@@ -45,6 +49,13 @@ export default function Interview() {
       setSelectedJobId(interviewJobId);
     }
   }, [interviewJobId, selectedJobId]);
+
+  // If page was reloaded mid-interview and mode was lost, go back to mode selector
+  useEffect(() => {
+    if (interviewActive && interviewMode === null) {
+      setInterviewActive(false);
+    }
+  }, []);
 
   const buildFallbackAnalytics = () => ({
     confidenceScore: 72,
@@ -125,12 +136,80 @@ export default function Interview() {
     }
   }, [isSpeaking, speakingMessageId]);
 
+  // Avatar widget initialization
+  useEffect(() => {
+    if (!interviewActive || interviewMode !== 'avatar') return;
+    if (!avatarContainerRef.current) return;
+
+    const baseServerUrl = (import.meta as unknown as { env: Record<string, string | undefined> }).env.VITE_AVATAR_SERVER_URL || 'ws://localhost:8765/ws';
+    const origin = window.location.origin;
+
+    // Pass job context to server via query params
+    const jobTitle = encodeURIComponent(selectedJob?.title ?? '');
+    const company = encodeURIComponent(selectedJob?.company ?? '');
+    const serverUrl = `${baseServerUrl}?job_title=${jobTitle}&company=${company}`;
+
+    const chat = AvatarChat.init({
+      container: avatarContainerRef.current,
+      serverUrl,
+      position: 'inline',
+      authEnabled: false,
+      primaryColor: '#6B2FD9',
+      startCollapsed: false,
+      enableVoice: true,
+      enableText: true,
+      width: window.innerWidth,
+      height: window.innerHeight - 56,
+      avatarUrl: `${origin}/nyx.zip`,
+      assetsBaseUrl: `${origin}/`,
+      suggestions: [
+        'Расскажите о своём опыте',
+        'Какие технологии вы знаете?',
+        'Опишите ваш самый сложный проект',
+      ],
+      customStyles: `
+        avatar-chat-widget { display: block; width: 100% !important; height: 100% !important; }
+        .widget-inline-container, .widget-root, .widget-panel { width: 100% !important; height: 100% !important; border-radius: 0 !important; box-shadow: none !important; }
+        [class*="branding"], [class*="powered"], [class*="footer"], a[href*="myned"] { display: none !important; }
+      `,
+      onConnectionChange: (connected: boolean) => setAvatarConnected(connected),
+      onReady: () => {
+        setAvatarConnected(true);
+        // Rename "Nyx Assistant" → "Диана" and hide Myned AI branding inside Shadow DOM
+        setTimeout(() => {
+          const container = avatarContainerRef.current;
+          if (!container) return;
+          const widget = container.querySelector('avatar-chat-widget');
+          const shadow = (widget as HTMLElement & { shadowRoot: ShadowRoot | null })?.shadowRoot;
+          if (shadow) {
+            // Rename title
+            const title = shadow.querySelector('h3');
+            if (title && title.textContent?.includes('Nyx')) title.textContent = 'Диана';
+            // Hide branding
+            const style = document.createElement('style');
+            style.textContent = '[class*="branding"],[class*="powered"],[class*="footer"],a[href*="myned"]{display:none!important;}';
+            shadow.appendChild(style);
+          }
+        }, 500);
+      },
+    });
+
+    return () => {
+      setAvatarConnected(false);
+      chat.destroy();
+    };
+  }, [interviewActive, interviewMode, selectedJob]);
+
   const startInterview = useCallback(async () => {
     if (!selectedJob) return;
     clearInterview();
     setInterviewJobId(selectedJob.id);
     setInterviewActive(true);
     setShowAnalytics(false);
+
+    // In avatar mode the widget handles the conversation
+    if (interviewMode === 'avatar') return;
+
     setAiLoading(true);
 
     try {
@@ -165,7 +244,7 @@ export default function Interview() {
       }
     }
     setAiLoading(false);
-  }, [selectedJob, clearInterview, setInterviewJobId, setInterviewActive, addInterviewMessage, autoVoice, speechOutputSupported, speak, lang]);
+  }, [selectedJob, clearInterview, setInterviewJobId, setInterviewActive, addInterviewMessage, autoVoice, speechOutputSupported, speak, lang, interviewMode]);
 
   const sendMessage = async () => {
     if (!draftMessage || aiLoading || !selectedJob) return;
@@ -285,6 +364,82 @@ export default function Interview() {
     );
   }
 
+  if (!interviewActive && !showAnalytics && interviewMode === null) {
+    return (
+      <div className="min-h-screen pt-16 bg-background">
+        <div className="container py-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mb-8 gap-1 bg-transparent"
+              onClick={() => navigate('/dashboard')}
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Назад
+            </Button>
+
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 mb-4">
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs font-medium text-primary">Мок-собеседование</span>
+              </div>
+              <h1 className="font-display text-3xl lg:text-4xl font-bold tracking-tight mb-3">
+                Выберите формат<br />
+                <span className="text-primary">собеседования</span>
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                Потренируйтесь перед настоящим интервью
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+              {/* Text Chat */}
+              <button
+                type="button"
+                onClick={() => setInterviewMode('text')}
+                className="group text-left rounded-2xl border-2 border-border bg-white p-6 hover:border-primary hover:shadow-lg transition-all duration-200 focus:outline-none focus:border-primary"
+              >
+                <div className="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors">
+                  <MessageSquare className="w-6 h-6 text-primary" />
+                </div>
+                <h2 className="font-display font-bold text-lg mb-2">Текстовый чат</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                  Общайтесь с AI-интервьюером текстом или через голосовой ввод. Получите детальный анализ по окончании.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs bg-green-50 text-green-700 border border-green-100 rounded-full px-2.5 py-1">Анализ ответов</span>
+                  <span className="text-xs bg-green-50 text-green-700 border border-green-100 rounded-full px-2.5 py-1">Голосовой ввод</span>
+                  <span className="text-xs bg-green-50 text-green-700 border border-green-100 rounded-full px-2.5 py-1">Работает сразу</span>
+                </div>
+              </button>
+
+              {/* 3D Avatar */}
+              <button
+                type="button"
+                onClick={() => setInterviewMode('avatar')}
+                className="group text-left rounded-2xl border-2 border-border bg-white p-6 hover:border-primary hover:shadow-lg transition-all duration-200 focus:outline-none focus:border-primary"
+              >
+                <div className="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center mb-4 group-hover:bg-primary/10 transition-colors">
+                  <Bot className="w-6 h-6 text-primary" />
+                </div>
+                <h2 className="font-display font-bold text-lg mb-2">3D Аватар</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                  Реалистичное интервью с 3D-аватаром: мимика, lip-sync и голос в реальном времени.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs bg-purple-50 text-purple-700 border border-purple-100 rounded-full px-2.5 py-1">3D Gaussian Splatting</span>
+                  <span className="text-xs bg-purple-50 text-purple-700 border border-purple-100 rounded-full px-2.5 py-1">Lip-sync</span>
+                  <span className="text-xs bg-amber-50 text-amber-700 border border-amber-100 rounded-full px-2.5 py-1">Нужен сервер</span>
+                </div>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
   if (!interviewActive && !showAnalytics) {
     return (
       <div className="min-h-screen pt-16 bg-background">
@@ -293,15 +448,27 @@ export default function Interview() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Button
-              variant="outline"
-              size="sm"
-              className="mb-6 gap-1 bg-transparent"
-              onClick={() => navigate('/dashboard')}
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Назад
-            </Button>
+            <div className="flex items-center gap-3 mb-6">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1 bg-transparent"
+                onClick={() => setInterviewMode(null)}
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Формат
+              </Button>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10">
+                {interviewMode === 'avatar' ? (
+                  <Bot className="w-3.5 h-3.5 text-primary" />
+                ) : (
+                  <MessageSquare className="w-3.5 h-3.5 text-primary" />
+                )}
+                <span className="text-xs font-medium text-primary">
+                  {interviewMode === 'avatar' ? '3D Аватар' : 'Текстовый чат'}
+                </span>
+              </div>
+            </div>
 
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
@@ -490,6 +657,61 @@ export default function Interview() {
               </Button>
             </div>
           </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  if (interviewActive && interviewMode === 'avatar') {
+    return (
+      <div className="flex flex-col bg-white" style={{ height: '100dvh' }}>
+        <div className="border-b border-border bg-white/80 backdrop-blur-md sticky top-0 z-30 shrink-0" style={{ paddingTop: '64px' }}>
+          <div className="container flex items-center justify-between h-14">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center">
+                <Bot className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <div className="text-sm font-bold font-display">{selectedJob?.title}</div>
+                <div className="text-xs text-muted-foreground">{selectedJob?.company}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${
+                avatarConnected
+                  ? 'bg-green-50 border-green-200 text-green-700'
+                  : 'bg-amber-50 border-amber-200 text-amber-700'
+              }`}>
+                {avatarConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                {avatarConnected ? 'Подключён' : 'Нет соединения'}
+              </div>
+              <Button
+                size="sm"
+                onClick={finishInterview}
+                className="gap-1 bg-primary text-white hover:bg-primary/90"
+              >
+                <BarChart2 className="w-3.5 h-3.5" />
+                Завершить и получить анализ
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setInterviewActive(false); setInterviewMode(null); clearInterview(); }}
+                className="gap-1 bg-transparent"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Выйти
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-stretch justify-center relative overflow-hidden">
+          <div
+            ref={avatarContainerRef}
+            id="avatar-chat-container"
+            className="w-full"
+          />
         </div>
       </div>
     );

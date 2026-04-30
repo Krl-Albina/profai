@@ -1,6 +1,26 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Avatar widget fills container */
+#avatar-chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+#avatar-chat-container avatar-chat-widget {
+  display: block !important;
+  width: 100% !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+/* Hide Myned AI branding */
+#avatar-chat-container .myned-branding,
+#avatar-chat-container [class*="branding"],
+#avatar-chat-container [class*="powered-by"],
+#avatar-chat-container [class*="footer"] {
+  display: none !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
